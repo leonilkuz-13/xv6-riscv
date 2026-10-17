@@ -528,3 +528,27 @@ sys_pipe(void)
   }
   return 0;
 }
+
+uint64
+sys_mutex(void)
+{
+  return -1;
+}
+
+uint64
+sys_mutex_lock(void)
+{
+  return -1;
+}
+
+uint64
+sys_mutex_unlock(void)
+{
+  return -1;
+}
+
+uint64
+sys_mutex_close(void)
+{
+  return -1;
+}
