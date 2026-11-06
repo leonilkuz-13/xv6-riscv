@@ -1,6 +1,6 @@
 #include "types.h"
 #include "riscv.h"
-#include "defs.h"c
+#include "defs.h"
 #include "param.h"
 #include "spinlock.h"
 #include "proc.h"
@@ -27,7 +27,9 @@ mutexalloc(struct file **pf)
     f->type = FD_MUTEX;
     f->readable = 0;
     f->writable = 0;
+    f->mutex = m;
     *pf = f;
+    printf("[mutexalloc] pid=%d f=%p m=%p\n", myproc()->pid, f, m);
     return 0;
 }
 
@@ -36,6 +38,7 @@ mutex_close(struct sleeplock *m) {
     if (m == 0) {
         return;
     }
+    printf("[mutexclose] m=%p\n", m);
     kfree(m);
 }
 
@@ -50,18 +53,20 @@ mutex_lock(struct sleeplock *m) {
     release(&m->lk);
 
     acquiresleep(m);
+    printf("[mutex_lock] pid=%d m=%p\n", p->pid, m);
     return 0;
 }
 
 int mutex_unlock(struct sleeplock *m) {
     struct proc *p = myproc();
     acquire(&m->lk);
-    if (m->locked && m->pid == p->pid) {
+    if (!(m->locked && m->pid == p->pid)) {
         release(&m->lk);
         return -1;
     }
 
     release(&m->lk);
     releasesleep(m);
+    printf("[mutex_unlock] pid=%d m=%p\n", p->pid, m);
     return 0;
 }

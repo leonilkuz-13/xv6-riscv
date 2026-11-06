@@ -64,8 +64,9 @@ fileclose(struct file *f)
   acquire(&ftable.lock);
   if (f->ref < 1)
     panic("fileclose");
-  if (f->type == FD_MUTEX) {
-
+  if (f->type == FD_MUTEX && holdingsleep(f->mutex)) {
+    printf("[fileclose] pid=%d release mutex m=%p\n", myproc()->pid, f->mutex);
+    releasesleep(f->mutex);
   }
   if (--f->ref > 0) {
     release(&ftable.lock);
@@ -82,6 +83,9 @@ fileclose(struct file *f)
     begin_op();
     iput(ff.ip);
     end_op();
+  } else if (ff.type == FD_MUTEX) {
+    printf("[fileclose] pid=%d mutexclose m=%p\n", myproc()->pid, ff.mutex);
+    mutexclose(ff.mutex);
   }
 }
 
