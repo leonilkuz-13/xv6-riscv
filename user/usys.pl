@@ -43,3 +43,7 @@ entry("sbrk");
 entry("pause");
 entry("uptime");
 entry("sync");
+entry("mutex"); 
+entry("mutex_lock"); 
+entry("mutex_unlock");
+entry("mutex_close");

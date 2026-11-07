@@ -528,3 +528,52 @@ sys_pipe(void)
   }
   return 0;
 }
+
+uint64
+sys_mutex(void)
+{
+  struct file *f;
+  int fd;
+  uint64 fdarray;
+  struct proc *p = myproc();
+
+  argaddr(0, &fdarray);
+  if (mutexalloc(&f) < 0)
+    return -1;
+  if ((fd = fdalloc(f)) < 0) {
+    fileclose(f);
+    return -1;
+  }
+  if (copyout(p->pagetable, p->sz, fdarray, (char *)&fd, sizeof(fd)) < 0) {
+    p->ofile[fd] = 0;
+    fileclose(f);
+    return -1;
+  }
+  return 0;
+}
+
+uint64
+sys_mutex_lock(void)
+{
+  struct file *f;
+
+  if (argfd(0, 0, &f) < 0 || f->type != FD_MUTEX)
+    return -1;
+  return mutex_lock(f->mutex);
+}
+
+uint64
+sys_mutex_unlock(void)
+{
+  struct file *f;
+
+  if (argfd(0, 0, &f) < 0 || f->type != FD_MUTEX)
+    return -1;
+  return mutex_unlock(f->mutex);
+}
+
+uint64
+sys_mutex_close(void)
+{
+  return -1;
+}

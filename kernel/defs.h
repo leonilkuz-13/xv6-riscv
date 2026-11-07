@@ -176,6 +176,12 @@ void            plicinit(void);
 void            plicinithart(void);
 int             plic_claim(void);
 void            plic_complete(int);
+// mutex.c
+int             mutexalloc(struct file**);
+void            mutex_close(struct sleeplock*);
+int             mutex_lock(struct sleeplock*);
+int             mutex_unlock(struct sleeplock*);
+
 
 // virtio_disk.c
 void            virtio_disk_init(void);

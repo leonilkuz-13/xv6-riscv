@@ -12,6 +12,7 @@
 #include "file.h"
 #include "stat.h"
 #include "proc.h"
+#include "stdio.h"
 
 struct devsw devsw[NDEV];
 struct {
@@ -64,6 +65,10 @@ fileclose(struct file *f)
   acquire(&ftable.lock);
   if (f->ref < 1)
     panic("fileclose");
+  if (f->type == FD_MUTEX && holdingsleep(f->mutex)) {
+    printk("[fileclose] pid=%d release mutex m=%p\n", myproc()->pid, f->mutex);
+    releasesleep(f->mutex);
+  }
   if (--f->ref > 0) {
     release(&ftable.lock);
     return;
@@ -79,6 +84,9 @@ fileclose(struct file *f)
     begin_op();
     iput(ff.ip);
     end_op();
+  } else if (ff.type == FD_MUTEX) {
+    printk("[fileclose] pid=%d mutexclose m=%p\n", myproc()->pid, ff.mutex);
+    mutex_close(ff.mutex);
   }
 }
 
@@ -122,6 +130,9 @@ fileread(struct file *f, uint64 addr, int n)
     if ((r = readi(f->ip, 1, addr, f->off, n)) > 0)
       f->off += r;
     iunlock(f->ip);
+  } else if (f->type == FD_MUTEX) {
+    return -1;
+
   } else {
     panic("fileread");
   }
@@ -141,6 +152,8 @@ filewrite(struct file *f, uint64 addr, int n)
 
   if (f->type == FD_PIPE) {
     ret = pipewrite(f->pipe, addr, n);
+  } else if (f->type == FD_MUTEX) {
+    return -1;    
   } else if (f->type == FD_DEVICE) {
     if (f->major < 0 || f->major >= NDEV || !devsw[f->major].write)
       return -1;
