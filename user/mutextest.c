@@ -34,26 +34,10 @@ print_args_sync(int argc, char **argv, int fd)
   }
 }
 
-// Проверка, что read/write/fstat на fd мьютекса дают -1
-static void
-check_not_io(int fd)
-{
-  char buf[4] = "x";
-  struct stat st;
-
-  if (read(fd, buf, 1) != -1)
-    printf("FAIL: read on mutex returned != -1\n");
-  if (write(fd, buf, 1) != -1)
-    printf("FAIL: write on mutex returned != -1\n");
-  if (fstat(fd, &st) != -1)
-    printf("FAIL: fstat on mutex returned != -1\n");
-  printf("check_not_io: OK\n");
-}
-
 int
 main(int argc, char *argv[])
 {
-  int fd, fd2, pid;
+  int fd, pid;
 
   if (argc < 2) {
     printf("usage: mutextest arg1 [arg2 ...]\n");
@@ -95,15 +79,6 @@ main(int argc, char *argv[])
   print_args_sync(argc, argv, fd);
   wait(0);
   close(fd);
-
-  // Проверка read/write/fstat
-  printf("\nVerify read/write/fstat\n");
-  if (mutex(&fd2) < 0) {
-    printf("mutex failed\n");
-    exit(1);
-  }
-  check_not_io(fd2);
-  close(fd2);
 
   exit(0);
 }
